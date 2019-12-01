@@ -1,13 +1,14 @@
 from dejavu.database import get_database, Database
 import dejavu.decoder as decoder
-import fingerprint
+import dejavu.fingerprint as fingerprint
+from dejavu.recognize import FileRecognizer
 import multiprocessing
 import os
 import traceback
 import sys
 
 
-class Dejavu(object):
+class Dejavu:
 
     SONG_ID = "song_id"
     SONG_NAME = 'song_name'
@@ -58,7 +59,7 @@ class Dejavu(object):
 
             # don't refingerprint already fingerprinted files
             if decoder.unique_hash(filename) in self.songhashes_set:
-                print "%s already fingerprinted, continuing..." % filename
+                print("%s already fingerprinted, continuing..." % filename)
                 continue
 
             filenames_to_fingerprint.append(filename)
@@ -99,7 +100,7 @@ class Dejavu(object):
         song_name = song_name or songname
         # don't refingerprint already fingerprinted files
         if song_hash in self.songhashes_set:
-            print "%s already fingerprinted, continuing..." % song_name
+            print("%s already fingerprinted, continuing..." % song_name)
         else:
             song_name, hashes, file_hash = _fingerprint_worker(
                 filepath,
@@ -162,8 +163,8 @@ class Dejavu(object):
             Database.FIELD_FILE_SHA1 : song.get(Database.FIELD_FILE_SHA1, None).encode("utf8"),}
         return song
 
-    def recognize(self, recognizer, *options, **kwoptions):
-        r = recognizer(self)
+    def recognize(self, *options, **kwoptions):
+        r = FileRecognizer(self)
         return r.recognize(*options, **kwoptions)
 
 
@@ -190,8 +191,11 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
         print("Finished channel %d/%d for %s" % (channeln + 1, channel_amount,
                                                  filename))
         result |= set(hashes)
+    return_set = set()
+    for a, b in result:
+        return_set.add((a, int(b)))
 
-    return song_name, result, file_hash
+    return song_name, return_set, file_hash
 
 
 def chunkify(lst, n):
@@ -199,4 +203,4 @@ def chunkify(lst, n):
     Splits a list into roughly n equal parts.
     http://stackoverflow.com/questions/2130016/splitting-a-list-of-arbitrary-size-into-only-roughly-n-equal-parts
     """
-    return [lst[i::n] for i in xrange(n)]
+    return [lst[i::n] for i in range(n)]

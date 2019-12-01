@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-# import os, sys
 
 
 def parse_requirements(requirements):
@@ -30,6 +29,8 @@ Dejavu attempts to match the audio against the fingerprints held in the
 database, returning the song or recording being played.
 
 __ http://willdrevo.com/fingerprinting-and-audio-recognition-with-python/
+
+forked and modified by @lmnoel: http://github.com/lmnoel/dejavu
 """
 REQUIREMENTS = parse_requirements("requirements.txt")
 

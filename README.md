@@ -1,3 +1,8 @@
+# fork comments:
+
+- Microphone recognition has been ripped out because I don't need it for my use case and it adds an extra dependency
+- Compatible with python 3.x+ only.
+
 dejavu
 ==========
 

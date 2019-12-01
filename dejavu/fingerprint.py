@@ -139,6 +139,7 @@ def generate_hashes(peaks, fan_value=DEFAULT_FAN_VALUE):
     [(e05b341a9b77a51fd26, 32), ... ]
     """
     if PEAK_SORT:
+        peaks = list(peaks)
         peaks.sort(key=itemgetter(1))
 
     for i in range(len(peaks)):
@@ -152,6 +153,6 @@ def generate_hashes(peaks, fan_value=DEFAULT_FAN_VALUE):
                 t_delta = t2 - t1
 
                 if t_delta >= MIN_HASH_TIME_DELTA and t_delta <= MAX_HASH_TIME_DELTA:
-                    h = hashlib.sha1(
-                        "%s|%s|%s" % (str(freq1), str(freq2), str(t_delta)))
+                    encoded_str = "{}|{}|{}".format(freq1, freq2, t_delta).encode()
+                    h = hashlib.sha1(encoded_str)
                     yield (h.hexdigest()[0:FINGERPRINT_REDUCTION], t1)
