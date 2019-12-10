@@ -9,6 +9,7 @@ class Database(object):
     FIELD_SONGNAME = 'song_name'
     FIELD_OFFSET = 'offset'
     FIELD_HASH = 'hash'
+    FIELD_GROUP_ID = "group_id"
 
     # Name of your Database subclass, this is used in configuration
     # to refer to your class
@@ -103,7 +104,7 @@ class Database(object):
         pass
 
     @abc.abstractmethod
-    def insert_song(self, song_name):
+    def insert_song(self, song_name, group_id):
         """
         Inserts a song name into the database, returns the new
         identifier of the song.
@@ -142,7 +143,7 @@ class Database(object):
         pass
 
     @abc.abstractmethod
-    def return_matches(self, hashes):
+    def return_matches(self, group_id, known_song_id, hashes):
         """
         Searches the database for pairs of (hash, offset) values.
 

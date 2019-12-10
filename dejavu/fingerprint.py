@@ -7,6 +7,8 @@ from scipy.ndimage.morphology import (generate_binary_structure,
 import hashlib
 from operator import itemgetter
 
+np.seterr(divide = 'ignore')
+
 IDX_FREQ_I = 0
 IDX_TIME_J = 1
 
@@ -61,7 +63,7 @@ PEAK_SORT = True
 # with potentially lesser collisions of matches.
 FINGERPRINT_REDUCTION = 20
 
-def fingerprint(channel_samples, Fs=DEFAULT_FS,
+def fingerprint(channel, sample_rate,
                 wsize=DEFAULT_WINDOW_SIZE,
                 wratio=DEFAULT_OVERLAP_RATIO,
                 fan_value=DEFAULT_FAN_VALUE,
@@ -72,11 +74,13 @@ def fingerprint(channel_samples, Fs=DEFAULT_FS,
     """
     # FFT the signal and extract frequency components
     arr2D = mlab.specgram(
-        channel_samples,
+        channel,
         NFFT=wsize,
-        Fs=Fs,
+        Fs=sample_rate,
         window=mlab.window_hanning,
         noverlap=int(wsize * wratio))[0]
+
+    del channel
 
     # apply log transform since specgram() returns linear array
     arr2D = 10 * np.log10(arr2D)

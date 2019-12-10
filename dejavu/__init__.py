@@ -43,7 +43,7 @@ class Dejavu:
             song_hash = song[Database.FIELD_FILE_SHA1]
             self.songhashes_set.add(song_hash)
 
-    def fingerprint_directory(self, path, extensions, nprocesses=None):
+    def fingerprint_directory(self, path, group_id, extensions, nprocesses=None):
         # Try to use the maximum amount of processes if not given.
         try:
             nprocesses = nprocesses or multiprocessing.cpu_count()
@@ -73,6 +73,7 @@ class Dejavu:
                                        worker_input)
 
         # Loop till we have all of them
+        song_name_to_song_id_map = {}
         while True:
             try:
                 song_name, hashes, file_hash = iterator.next()
@@ -85,16 +86,17 @@ class Dejavu:
                 # Print traceback because we can't reraise it here
                 traceback.print_exc(file=sys.stdout)
             else:
-                sid = self.db.insert_song(song_name, file_hash)
-
+                sid = self.db.insert_song(song_name, group_id, file_hash)
+                song_name_to_song_id_map[song_name] = sid
                 self.db.insert_hashes(sid, hashes)
                 self.db.set_song_fingerprinted(sid)
                 self.get_fingerprinted_songs()
 
         pool.close()
         pool.join()
+        return song_name_to_song_id_map
 
-    def fingerprint_file(self, filepath, song_name=None):
+    def fingerprint_file(self, filepath, group_id, song_name=None):
         songname = decoder.path_to_songname(filepath)
         song_hash = decoder.unique_hash(filepath)
         song_name = song_name or songname
@@ -107,15 +109,16 @@ class Dejavu:
                 self.limit,
                 song_name=song_name
             )
-            sid = self.db.insert_song(song_name, file_hash)
+            sid = self.db.insert_song(song_name, group_id, file_hash)
 
             self.db.insert_hashes(sid, hashes)
             self.db.set_song_fingerprinted(sid)
             self.get_fingerprinted_songs()
+            return sid
 
-    def find_matches(self, samples, Fs=fingerprint.DEFAULT_FS):
-        hashes = fingerprint.fingerprint(samples, Fs=Fs)
-        return self.db.return_matches(hashes)
+    def find_matches(self, group_id, known_song_id, channel, sample_rate):
+        hashes = fingerprint.fingerprint(channel, sample_rate)
+        return self.db.return_matches(group_id, known_song_id, hashes)
 
     def align_matches(self, matches):
         """
@@ -178,7 +181,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
 
     songname, extension = os.path.splitext(os.path.basename(filename))
     song_name = song_name or songname
-    channels, Fs, file_hash = decoder.read(filename, limit)
+    channels, sample_rate, file_hash = decoder.read(filename, limit)
     result = set()
     channel_amount = len(channels)
 
@@ -187,7 +190,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
         print("Fingerprinting channel %d/%d for %s" % (channeln + 1,
                                                        channel_amount,
                                                        filename))
-        hashes = fingerprint.fingerprint(channel, Fs=Fs)
+        hashes = fingerprint.fingerprint(channel, sample_rate)
         print("Finished channel %d/%d for %s" % (channeln + 1, channel_amount,
                                                  filename))
         result |= set(hashes)
